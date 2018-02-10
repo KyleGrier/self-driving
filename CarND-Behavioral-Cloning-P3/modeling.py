@@ -64,11 +64,10 @@ def generator(samples, batch_size=32):
         shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
-
             images = []
             angles = []
             for batch_sample in batch_samples:
-                name = './IMG/'+batch_sample[0].split('/')[-1]
+                name = './data/IMG/' + batch_sample[0].split("\\")[-1]
                 center_image = cv2.imread(name)
                 center_angle = float(batch_sample[3])
                 images.append(center_image)
@@ -117,10 +116,12 @@ if __name__ == "__main__":
     #for arg in sys.argv[1:]:
     #    print arg
     #print(sys.argv[0])
-    #modelTrainGen(X_train, y_train, validation_split, epochs)
     train_samples, validation_samples = getSamples()
-    generator = smallGenerator(train_samples)
+    train_generator = generator(train_samples)
+    valid_generator = generator(validation_samples)
+    train_steps = (len(train_samples) // 32) + 1 
+    valid_steps = (len(valid_samples) // 32) + 1 
     model = nvidiaModel()
-    model.fit_generator(generator, steps_per_epoch=3,epochs=50)
-    print(model.evaluate_generator(generator, steps=3))
+    model.fit_generator(train_generator, steps_per_epoch=3, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
+    #print(model.evaluate_generator(validation_samples, steps=3))
     model.save('model.h5')
