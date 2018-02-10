@@ -28,10 +28,10 @@ def nvidiaModel():
 
     model = Sequential()
 
-    model.add(Lambda(lambda x: x/127.5 - 1.,\
-        input_shape=(ch, row, col),\
-        output_shape=(ch, row, col)))
-    #model.add(Lambda(x: x/127.5 - 1, input_shape=(160, 320, 3)))
+    #model.add(Lambda(lambda x: x/127.5 - 1.,\
+    #    input_shape=(ch, row, col),\
+    #    output_shape=(ch, row, col)))
+    model.add(Lambda(lambda x: x/127.5 - 1, input_shape=(160, 320, 3)))
     model.add(Convolution2D(24, 5, strides=(2, 2), activation='relu'))
     model.add(Convolution2D(36, 5, strides=(2, 2), activation='relu'))
     model.add(Convolution2D(48, 5, strides=(2, 2), activation='relu'))
@@ -43,6 +43,7 @@ def nvidiaModel():
     model.add(Dense(100))
     model.add(Dense(50))
     model.add(Dense(10))
+    model.add(Dense(1))
     model.compile(loss='mse', optimizer='adam')
 
     return model
@@ -118,8 +119,8 @@ if __name__ == "__main__":
     #print(sys.argv[0])
     #modelTrainGen(X_train, y_train, validation_split, epochs)
     train_samples, validation_samples = getSamples()
-    smallGenerator(train_samples)
-    #model = nvidiaModel()
-    #model.fit_generator(generator, epochs=50)
-    #print(model.evaluate_generator(generator))
-   # model.save('model.h5')
+    generator = smallGenerator(train_samples)
+    model = nvidiaModel()
+    model.fit_generator(generator, epochs=50)
+    print(model.evaluate_generator(generator))
+    model.save('model.h5')
