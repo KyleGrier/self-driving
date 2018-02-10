@@ -5,12 +5,14 @@ from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D
 from random import shuffle
 from sklearn.model_selection import train_test_split
+import sklearn
+import sys
 
-def norm():
+path = "../Data/driving_log.csv"
 
 def getSamples():
 	samples = []
-	with open('./driving_log.csv') as csvfile:
+	with open('data/driving_log.csv') as csvfile:
 	    reader = csv.reader(csvfile)
 	    for line in reader:
 	        samples.append(line)
@@ -22,15 +24,15 @@ def nvidiaModel():
 
 	model = Sequential()
 
-	model.add(Lambda(lambda x: x/127.5 - 1.,
-        input_shape=(ch, row, col),
+	model.add(Lambda(lambda x: x/127.5 - 1.,\
+        input_shape=(ch, row, col),\
         output_shape=(ch, row, col)))
 	#model.add(Lambda(x: x/127.5 - 1, input_shape=(160, 320, 3)))
-	model.add(Convolution2D(24, 5, strides=2, activation='relu'))
-	model.add(Convolution2D(36, 5, strides=2, activation='relu'))
-	model.add(Convolution2D(48, 5, strides=2, activation='relu'))
-	model.add(Convolution2D(64, 3, activation='relu'))
-	model.add(Convolution2D(64, 3, activation='relu'))
+	model.add(Convolution2D(24, 5, 5, strides=(2, 2), activation='relu'))
+	model.add(Convolution2D(36, 5, 5, strides=(2, 2), activation='relu'))
+	model.add(Convolution2D(48, 5, 5, strides=(2, 2), activation='relu'))
+	model.add(Convolution2D(64, 3, 3, activation='relu'))
+	model.add(Convolution2D(64, 3, 3, activation='relu'))
 
 	model.add(Flatten())
 
@@ -41,8 +43,15 @@ def nvidiaModel():
 
 	return model
 
-def modelTrain(X_train, y_train, validation_split, epochs):
-	return
+def modelTrainGen(X_train, y_train, validation_split, epochs):
+	train_samples, validation_samples = get_samples()
+	train_generator = generator(train_samples, batch_size=32)
+	validation_generator = generator(validation_samples, batch_size=32)
+	model = nvidiaModel()
+	model.fit_generator(train_generator, samples_per_epoch = \
+	            len(train_samples), validation_data=validation_generator, \
+	            nb_val_samples=len(validation_samples), nb_epoch=3)
+	model.save('model.h5')
 
 def generator(samples, batch_size=32):
     num_samples = len(samples)
@@ -65,14 +74,21 @@ def generator(samples, batch_size=32):
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
 
-#model.fit(X_train, y_train, validation_split=0.2, shuffle=True, epoch=3)
-
 if __name__ == "__main__":
-	train_samples, validation_samples = 
-	train_generator = generator(train_samples, batch_size=32)
-	validation_generator = generator(validation_samples, batch_size=32)
-	model = nvidiaModel()
-	model.fit_generator(train_generator, samples_per_epoch= /
-	            len(train_samples), validation_data=validation_generator, /
-	            nb_val_samples=len(validation_samples), nb_epoch=3)
-	model.save('model.h5')
+    #for arg in sys.argv[1:]:
+    #    print arg
+    #print(sys.argv[0])
+    ex_neg = "data/IMG/center_2017_11_18_16_00_07_045.jpg"
+    ex_neg_lab = -0.3743682
+    ex_zero = "data/IMG/center_2017_11_18_16_00_13_544.jpg"
+    ex_zero_lab = 0
+    ex_pos = "data/IMG/center_2017_11_18_16_00_14_701.jpg"
+    ex_pos_lab = 0.3366786
+
+    ex = [ex_neg, ex_zero, ex_pos]
+    X = np.array([plt.imread(img) for img in ex])
+    y = np.array([ex_neg_lab, ex_zero_lab, ex_pos_lab])
+    model = nvidiaModel()
+    model.fit(X, y, epoch=100)
+    score = model3.evaluate(X, y)
+    print(score)
