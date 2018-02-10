@@ -79,30 +79,24 @@ def generator(samples, batch_size=32):
             yield sklearn.utils.shuffle(X_train, y_train)
 
 def smallGenerator(samples, batch_size=32):
-    samples = samples=[:72]
+    samples = samples[0:72]
     num_samples = len(samples)
     while 1: # Loop forever so the generator never terminates
         shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
-
             images = []
             angles = []
             for batch_sample in batch_samples:
-                name = './IMG/' + batch_sample[0].split('/')[-1]
-                print(name)
-                break
+                name = './data/IMG/' + batch_sample[0].split("\\")[-1]
                 center_image = cv2.imread(name)
                 center_angle = float(batch_sample[3])
                 images.append(center_image)
                 angles.append(center_angle)
-            break
             # trim image to only see section with road
             X_train = np.array(images)
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
-        break
-    yield 1
 
 def testModel(model):
     ex_neg = "data/IMG/center_2017_11_18_16_00_07_045.jpg"
@@ -124,8 +118,8 @@ if __name__ == "__main__":
     #print(sys.argv[0])
     #modelTrainGen(X_train, y_train, validation_split, epochs)
     train_samples, validation_samples = getSamples()
-    generator = smallGenerator(train_samples)
+    smallGenerator(train_samples)
     #model = nvidiaModel()
     #model.fit_generator(generator, epochs=50)
     #print(model.evaluate_generator(generator))
-    model.save('model.h5')
+   # model.save('model.h5')
