@@ -116,9 +116,9 @@ if __name__ == "__main__":
     #for arg in sys.argv[1:]:
     #    print arg
     #print(sys.argv[0])
-    train_samples, validation_samples = getSamples()
+    train_samples, valid_samples = getSamples()
     train_generator = generator(train_samples)
-    valid_generator = generator(validation_samples)
+    valid_generator = generator(valid_samples)
     train_steps = (len(train_samples) // 32) + 1 
     valid_steps = (len(valid_samples) // 32) + 1 
     model = nvidiaModel()
