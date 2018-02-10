@@ -7,6 +7,10 @@ from random import shuffle
 from sklearn.model_selection import train_test_split
 import sklearn
 import sys
+import matplotlib.pyplot as plt
+
+import warnings
+warnings.filterwarnings("ignore")
 
 path = "../Data/driving_log.csv"
 
