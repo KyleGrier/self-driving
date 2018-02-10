@@ -121,6 +121,6 @@ if __name__ == "__main__":
     train_samples, validation_samples = getSamples()
     generator = smallGenerator(train_samples)
     model = nvidiaModel()
-    model.fit_generator(generator, epochs=50)
-    print(model.evaluate_generator(generator))
+    model.fit_generator(generator, steps_per_epoch=3,epochs=50)
+    print(model.evaluate_generator(generator, steps=3))
     model.save('model.h5')
