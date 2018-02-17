@@ -28,10 +28,9 @@ def nvidiaModel():
 
     model = Sequential()
 
-    #model.add(Lambda(lambda x: x/127.5 - 1.,\
-    #    input_shape=(ch, row, col),\
-    #    output_shape=(ch, row, col)))
     model.add(Lambda(lambda x: x/127.5 - 1, input_shape=(160, 320, 3)))
+    #Remove top 70 pixels and the bottom 25 pixels. Don't drop sides.
+    model.add(Cropping2D(cropping=((70, 25), (0,0))))
     model.add(Convolution2D(24, 5, strides=(2, 2), activation='relu'))
     model.add(Convolution2D(36, 5, strides=(2, 2), activation='relu'))
     model.add(Convolution2D(48, 5, strides=(2, 2), activation='relu'))
@@ -124,4 +123,4 @@ if __name__ == "__main__":
     model = nvidiaModel()
     model.fit_generator(train_generator, steps_per_epoch=3, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
     #print(model.evaluate_generator(validation_samples, steps=3))
-    model.save('model.h5')
+    model.save('model2.h5')
