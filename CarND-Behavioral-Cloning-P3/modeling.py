@@ -80,11 +80,24 @@ def generator(samples, batch_size=32):
             images = []
             angles = []
             for batch_sample in batch_samples:
-                name = './data/IMG/' + batch_sample[0].split("\\")[-1]
-                center_image = cv2.imread(name)
+                center_name = './data/IMG/' + batch_sample[0].split("\\")[-1]
+                left_name = './data/IMG/' + batch_sample[1].split("\\")[-1]
+                right_name = './data/IMG/' + batch_sample[2].split("\\")[-1]
+
+                center_image = cv2.imread(center_name)
+                left_image = cv2.imread(left_name)
+                right_image = cv2.imread(rigth_name)
+
                 center_angle = float(batch_sample[3])
+                left_angle = float(batch_sample[3]) + 0.1
+                right_angle = float(batch_sample[3]) - 0.1
+
                 images.append(center_image)
+                images.append(left_image)
+                imgage.append(right_image)
                 angles.append(center_angle)
+                angles.append(left_angle)
+                angles.append(right_angle)
 
             # trim image to only see section with road
             X_train = np.array(images)
@@ -130,13 +143,13 @@ if __name__ == "__main__":
     #for arg in sys.argv[1:]:
     #    print arg
     #print(sys.argv[0])
-    straightness()
-    #train_samples, valid_samples = getSamples()
-    #train_generator = generator(train_samples)
-    #valid_generator = generator(valid_samples)
-    #train_steps = (len(train_samples) // 32) + 1 
-    #valid_steps = (len(valid_samples) // 32) + 1 
-    #model = nvidiaModel()
-    #model.fit_generator(train_generator, steps_per_epoch=3, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
-    #print(model.evaluate_generator(validation_samples, steps=3))
-    #model.save('model2.h5')
+    #straightness()
+    train_samples, valid_samples = getSamples()
+    train_generator = generator(train_samples)
+    valid_generator = generator(valid_samples)
+    train_steps = (len(train_samples) // 32) + 1 
+    valid_steps = (len(valid_samples) // 32) + 1 
+    model = nvidiaModel()
+    model.fit_generator(train_generator, steps_per_epoch=3, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
+    # print(model.evaluate_generator(validation_samples, steps=3))
+    model.save('model2.h5')
