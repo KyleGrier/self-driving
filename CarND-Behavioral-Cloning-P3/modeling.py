@@ -13,6 +13,20 @@ import warnings
 warnings.filterwarnings("ignore")
 
 path = "../Data/driving_log.csv"
+def straightness():
+    samples = []
+    with open('data/driving_log.csv') as csvfile:
+        reader = csv.reader(csvfile)
+        for line in reader:
+            samples.append(line)
+    straight = 0
+    turn = 0
+    for sample in samples:
+        if float(sample[3]) == 0.0:
+            straight += 1
+        else:
+            turn += 1
+    print("Samples include {} straight images and {} turn images".format(staight, turn))
 
 def getSamples():
     samples = []
@@ -97,6 +111,7 @@ def smallGenerator(samples, batch_size=32):
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
 
+
 def testModel(model):
     ex_neg = "data/IMG/center_2017_11_18_16_00_07_045.jpg"
     ex_neg_lab = -0.3743682
@@ -115,12 +130,13 @@ if __name__ == "__main__":
     #for arg in sys.argv[1:]:
     #    print arg
     #print(sys.argv[0])
-    train_samples, valid_samples = getSamples()
-    train_generator = generator(train_samples)
-    valid_generator = generator(valid_samples)
-    train_steps = (len(train_samples) // 32) + 1 
-    valid_steps = (len(valid_samples) // 32) + 1 
-    model = nvidiaModel()
-    model.fit_generator(train_generator, steps_per_epoch=3, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
+    straightness()
+    #train_samples, valid_samples = getSamples()
+    #train_generator = generator(train_samples)
+    #valid_generator = generator(valid_samples)
+    #train_steps = (len(train_samples) // 32) + 1 
+    #valid_steps = (len(valid_samples) // 32) + 1 
+    #model = nvidiaModel()
+    #model.fit_generator(train_generator, steps_per_epoch=3, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
     #print(model.evaluate_generator(validation_samples, steps=3))
-    model.save('model2.h5')
+    #model.save('model2.h5')
