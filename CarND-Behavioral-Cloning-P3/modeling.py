@@ -89,13 +89,16 @@ def generator(samples, batch_size=32):
                 right_image = cv2.imread(rigth_name)
 
                 center_angle = float(batch_sample[3])
-                left_angle = float(batch_sample[3]) + 0.1
-                right_angle = float(batch_sample[3]) - 0.1
+                left_angle = float(batch_sample[3]) - 0.25
+                right_angle = float(batch_sample[3]) + 0.25
 
-                images.append(center_image)
+                remove_zeros = np.random.randint(5)
+                to_remove = remove_zeros == 3 and center_angle == 0
+                if (not to_remove):
+                    images.append(center_image)
+                    angles.append(center_angle)
                 images.append(left_image)
                 imgage.append(right_image)
-                angles.append(center_angle)
                 angles.append(left_angle)
                 angles.append(right_angle)
 
