@@ -34,7 +34,17 @@ def getSamples():
     with open('data/driving_log.csv') as csvfile:
         reader = csv.reader(csvfile)
         for line in reader:
-            samples.append(line)
+            remove_zeros = np.random.randint(15)
+            center_angle = float(line[3])
+            to_remove = remove_zeros == 3 and center_angle == 0
+            if( not to_remove):
+                samples.append(line)
+    with open('data/bridge.csv') as csvfile:
+        reader = csv.reader(csvfile)
+        for line in reader:
+            for _ in range(3):
+                samples.append(line)
+    shuffle(samples)
     train_samples, validation_samples = train_test_split(samples, test_size=0.2)
     return train_samples, validation_samples
 
@@ -89,61 +99,39 @@ def generator(samples, batch_size=32):
                 center_image = cv2.imread(center_name)
                 left_image = cv2.imread(left_name)
                 right_image = cv2.imread(right_name)
+                
+                center_image_flip = cv2.flip(center_image, 0)
+                left_image_flip = cv2.flip(center_image, 0)
+                right_image_flip = cv2.flip(center_image, 0)
 
                 center_angle = float(batch_sample[3])
-                left_angle = float(batch_sample[3]) + 0.25
-                right_angle = float(batch_sample[3]) - 0.25
+                left_angle = center_angle + 0.25
+                right_angle = center_angle - 0.25
 
-                remove_zeros = np.random.randint(5)
-                to_remove = remove_zeros == 3 and center_angle == 0
-                if (not to_remove):
-                    images.append(center_image)
-                    angles.append(center_angle)
+                center_angle_flip = center_angle
+                left_angle_flip = float(batch_sample[3]) - 0.25
+                right_angle_flip = float(batch_sample[3]) + 0.25                
+
+                images.append(center_image)
+                angles.append(center_angle)
                 images.append(left_image)
                 images.append(right_image)
                 angles.append(left_angle)
                 angles.append(right_angle)
 
-            # trim image to only see section with road
-            X_train = np.array(images)
-            y_train = np.array(angles)
-            yield sklearn.utils.shuffle(X_train, y_train)
-
-def newGenerator(samples, batch_size=32):
-    num_samples = len(samples)
-    while 1: # Loop forever so the generator never terminates
-        shuffle(samples)
-        for offset in range(0, num_samples, batch_size):
-            batch_samples = samples[offset:offset+batch_size]
-            images = []
-            angles = []
-            for batch_sample in batch_samples:
-                center_name = './data/IMG/' + batch_sample[0].split("\\")[-1]
-                left_name = './data/IMG/' + batch_sample[1].split("\\")[-1]
-                right_name = './data/IMG/' + batch_sample[2].split("\\")[-1]
-
-                center_image = cv2.imread(center_name)
-                left_image = cv2.imread(left_name)
-                right_image = cv2.imread(right_name)
-
-                center_angle = float(batch_sample[3])
-                left_angle = float(batch_sample[3]) + 0.25
-                right_angle = float(batch_sample[3]) - 0.25
-
-                remove_zeros = np.random.randint(20)
-                to_remove = remove_zeros == 3 and center_angle == 0
-                if (not to_remove):
-                    images.append(center_image)
-                    angles.append(center_angle)
-                    images.append(left_image)
-                    images.append(right_image)
-                    angles.append(left_angle)
-                    angles.append(right_angle)
+                images.append(center_image_flip)
+                angles.append(center_angle_flip)
+                images.append(left_image_flip)
+                images.append(right_image_flip)
+                angles.append(left_angle_flip)
+                angles.append(right_angle_flip)
 
             # trim image to only see section with road
             X_train = np.array(images)
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
+
+
 def smallGenerator(samples, batch_size=32):
     samples = samples[0:72]
     num_samples = len(samples)
@@ -185,8 +173,8 @@ if __name__ == "__main__":
     #print(sys.argv[0])
     #straightness()
     train_samples, valid_samples = getSamples()
-    train_generator = newGenerator(train_samples)
-    valid_generator = newGenerator(valid_samples)
+    train_generator = generator(train_samples)
+    valid_generator = generator(valid_samples)
     train_steps = (len(train_samples) // 32) + 1 
     valid_steps = (len(valid_samples) // 32) + 1 
     model = nvidiaModel()
