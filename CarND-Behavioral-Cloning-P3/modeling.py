@@ -86,7 +86,7 @@ def generator(samples, batch_size=32):
 
                 center_image = cv2.imread(center_name)
                 left_image = cv2.imread(left_name)
-                right_image = cv2.imread(rigth_name)
+                right_image = cv2.imread(right_name)
 
                 center_angle = float(batch_sample[3])
                 left_angle = float(batch_sample[3]) - 0.25
@@ -98,7 +98,7 @@ def generator(samples, batch_size=32):
                     images.append(center_image)
                     angles.append(center_angle)
                 images.append(left_image)
-                imgage.append(right_image)
+                images.append(right_image)
                 angles.append(left_angle)
                 angles.append(right_angle)
 
@@ -153,6 +153,6 @@ if __name__ == "__main__":
     train_steps = (len(train_samples) // 32) + 1 
     valid_steps = (len(valid_samples) // 32) + 1 
     model = nvidiaModel()
-    model.fit_generator(train_generator, steps_per_epoch=3, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
+    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=8)
     # print(model.evaluate_generator(validation_samples, steps=3))
     model.save('model2.h5')
