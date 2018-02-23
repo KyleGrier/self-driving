@@ -190,6 +190,6 @@ if __name__ == "__main__":
     train_steps = (len(train_samples) // 32) + 1 
     valid_steps = (len(valid_samples) // 32) + 1 
     model = nvidiaModel()
-    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=12)
+    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
     # print(model.evaluate_generator(validation_samples, steps=3))
     model.save('model2.h5')
