@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D
+from keras.optimizers import Adam
 from random import shuffle
 from sklearn.model_selection import train_test_split
 import sklearn
@@ -57,7 +58,8 @@ def nvidiaModel():
     model.add(Dense(50))
     model.add(Dense(10))
     model.add(Dense(1))
-    model.compile(loss='mse', optimizer='adam')
+    opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+    model.compile(loss='mse', optimizer=opt)
 
     return model
 
@@ -89,8 +91,8 @@ def generator(samples, batch_size=32):
                 right_image = cv2.imread(right_name)
 
                 center_angle = float(batch_sample[3])
-                left_angle = float(batch_sample[3]) - 0.25
-                right_angle = float(batch_sample[3]) + 0.25
+                left_angle = float(batch_sample[3]) + 0.25
+                right_angle = float(batch_sample[3]) - 0.25
 
                 remove_zeros = np.random.randint(5)
                 to_remove = remove_zeros == 3 and center_angle == 0
@@ -107,6 +109,41 @@ def generator(samples, batch_size=32):
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
 
+def newGenerator(samples, batch_size=32):
+    num_samples = len(samples)
+    while 1: # Loop forever so the generator never terminates
+        shuffle(samples)
+        for offset in range(0, num_samples, batch_size):
+            batch_samples = samples[offset:offset+batch_size]
+            images = []
+            angles = []
+            for batch_sample in batch_samples:
+                center_name = './data/IMG/' + batch_sample[0].split("\\")[-1]
+                left_name = './data/IMG/' + batch_sample[1].split("\\")[-1]
+                right_name = './data/IMG/' + batch_sample[2].split("\\")[-1]
+
+                center_image = cv2.imread(center_name)
+                left_image = cv2.imread(left_name)
+                right_image = cv2.imread(right_name)
+
+                center_angle = float(batch_sample[3])
+                left_angle = float(batch_sample[3]) + 0.25
+                right_angle = float(batch_sample[3]) - 0.25
+
+                remove_zeros = np.random.randint(20)
+                to_remove = remove_zeros == 3 and center_angle == 0
+                if (not to_remove):
+                    images.append(center_image)
+                    angles.append(center_angle)
+                    images.append(left_image)
+                    images.append(right_image)
+                    angles.append(left_angle)
+                    angles.append(right_angle)
+
+            # trim image to only see section with road
+            X_train = np.array(images)
+            y_train = np.array(angles)
+            yield sklearn.utils.shuffle(X_train, y_train)
 def smallGenerator(samples, batch_size=32):
     samples = samples[0:72]
     num_samples = len(samples)
@@ -148,11 +185,11 @@ if __name__ == "__main__":
     #print(sys.argv[0])
     #straightness()
     train_samples, valid_samples = getSamples()
-    train_generator = generator(train_samples)
-    valid_generator = generator(valid_samples)
+    train_generator = newGenerator(train_samples)
+    valid_generator = newGenerator(valid_samples)
     train_steps = (len(train_samples) // 32) + 1 
     valid_steps = (len(valid_samples) // 32) + 1 
     model = nvidiaModel()
-    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=8)
+    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=12)
     # print(model.evaluate_generator(validation_samples, steps=3))
     model.save('model2.h5')
