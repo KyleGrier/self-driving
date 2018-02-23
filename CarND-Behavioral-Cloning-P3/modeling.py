@@ -180,4 +180,4 @@ if __name__ == "__main__":
     model = nvidiaModel()
     model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
     # print(model.evaluate_generator(validation_samples, steps=3))
-    model.save('model2.h5')
+    model.save('model3.h5')
