@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 import sklearn
 import sys
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -80,7 +81,7 @@ def imageProcessing(sample, cutoff= 0.33):
     angle = float(sample[3])
 
     #To remove zero angle bias
-    if(abs(angle) < 0.05):
+    if(abs(angle) < 0.02):
         cutoff = 0.1
     mid_cutoff =  (1-cutoff)/2 + cutoff
 
@@ -102,11 +103,27 @@ def imageProcessing(sample, cutoff= 0.33):
         angle += -0.25
 
     img = cv2.imread(img_path)
+
     pick_flip = np.random.randint(2)
     if pick_flip == 1:
         img = cv2.flip(img, 0)
         angle *= -1
+
+    pick_bright = np.random.randint(2)
+    if pick_bright == 1:
+        img = augmentBrightness(img)
+
     return img, angle
+
+def augmentBrightness(img):
+    img_hsv = cv2.cvtColor(img,cv2.COLOR_RGB2HSV)
+    img_hsv = np.array(img_hsv, dtype = np.float64)
+    rand_bright = 2 * np.random.uniform()
+    img_hsv[:,:,2] = img_hsv[:, :, 2] * rand_bright
+    img_hsv[:,:,2][img_hsv[:,:,2]>255]  = 255
+    img_hsv = np.array(img_hsv, dtype = np.uint8)
+    img_aug = cv2.cvtColor(img_hsv,cv2.COLOR_HSV2RGB)
+    return img
 
 if __name__ == "__main__":
     train_samples, valid_samples = getSamples()
@@ -170,3 +187,15 @@ def straightness():
         else:
             turn += 1
     print("Samples include {} straight images and {} turn images".format(staight, turn))
+
+#Show the different augmented images
+def plotSamples(samples)
+    fig = plt.figure(figsize=(15,15))
+    gs_all = gridspec.GridSpec(9, 5)
+    for sample in samples:
+        img, ang = imageProcessing(sample)
+        gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs_all[i])
+        ax1 = plt.subplot(gs[0])
+        ax1.imshow(img)
+        ax1.xlabel(str(ang))
+    plt.show()
