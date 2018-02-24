@@ -84,8 +84,8 @@ def imageProcessing(sample, cutoff= 0.33):
     angle = float(sample[3])
 
     #To remove zero angle bias
-    if(abs(angle) < 0.02):
-        cutoff = 0.15
+    #if(abs(angle) < 0.02):
+    #    cutoff = 0.15
     mid_cutoff =  (1-cutoff)/2 + cutoff
 
     # Randomly pick between left, right, and center image with weighting to handle
