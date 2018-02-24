@@ -91,14 +91,14 @@ def imageProcessing(sample, cutoff= 0.33):
 
     #Use the center image
     if pick_camera <= cutoff:
-        img_path = './data/IMG/' + batch_sample[0].split("\\")[-1]
+        img_path = './data/IMG/' + sample[0].split("\\")[-1]
     # Use the left image
     elif pick_camera > cutoff and pick_camera <= mid_cutoff:
-        img_path = './data/IMG/' + batch_sample[1].split("\\")[-1]
+        img_path = './data/IMG/' + sample[1].split("\\")[-1]
         angle += 0.25
     # Use the right image
     else:
-        img_path = './data/IMG/' + batch_sample[2].split("\\")[-1]
+        img_path = './data/IMG/' + sample[2].split("\\")[-1]
         angle += -0.25
 
     img = cv2.imread(img_path)
