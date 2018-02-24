@@ -12,50 +12,26 @@ import matplotlib.pyplot as plt
 
 import warnings
 warnings.filterwarnings("ignore")
-
 path = "../Data/driving_log.csv"
-def straightness():
-    samples = []
-    with open('data/driving_log.csv') as csvfile:
-        reader = csv.reader(csvfile)
-        for line in reader:
-            samples.append(line)
-    straight = 0
-    turn = 0
-    for sample in samples:
-        if float(sample[3]) == 0.0:
-            straight += 1
-        else:
-            turn += 1
-    print("Samples include {} straight images and {} turn images".format(staight, turn))
 
 def getSamples():
     samples = []
     with open('data/driving_log.csv') as csvfile:
         reader = csv.reader(csvfile)
         for line in reader:
-            remove_zeros = np.random.randint(15)
-            center_angle = float(line[3])
-            to_remove = remove_zeros == 3 and center_angle == 0
-            if( not to_remove):
-                samples.append(line)
-    with open('data/bridge.csv') as csvfile:
-        reader = csv.reader(csvfile)
-        for line in reader:
-            for _ in range(3):
-                samples.append(line)
+            samples.append(line)
+
     shuffle(samples)
     train_samples, validation_samples = train_test_split(samples, test_size=0.2)
     return train_samples, validation_samples
 
+#Keras model derived from the Nvidia report 
 def nvidiaModel():
-    ch, row, col = 3, 80, 320  # Trimmed image format
-
     model = Sequential()
 
     model.add(Lambda(lambda x: x/127.5 - 1, input_shape=(160, 320, 3)))
-    #Remove top 70 pixels and the bottom 25 pixels. Don't drop sides.
-    model.add(Cropping2D(cropping=((70, 25), (0,0))))
+    #Remove top 50 pixels and the bottom 25 pixels. Don't drop sides.
+    model.add(Cropping2D(cropping=((50, 25), (0,0))))
     model.add(Convolution2D(24, 5, strides=(2, 2), activation='relu'))
     model.add(Convolution2D(36, 5, strides=(2, 2), activation='relu'))
     model.add(Convolution2D(48, 5, strides=(2, 2), activation='relu'))
@@ -68,7 +44,7 @@ def nvidiaModel():
     model.add(Dense(50))
     model.add(Dense(10))
     model.add(Dense(1))
-    opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+    opt = Adam(lr=0.0001)
     model.compile(loss='mse', optimizer=opt)
 
     return model
@@ -92,46 +68,58 @@ def generator(samples, batch_size=32):
             images = []
             angles = []
             for batch_sample in batch_samples:
-                center_name = './data/IMG/' + batch_sample[0].split("\\")[-1]
-                left_name = './data/IMG/' + batch_sample[1].split("\\")[-1]
-                right_name = './data/IMG/' + batch_sample[2].split("\\")[-1]
+                img, angle = imageProcessing(batch_sample)           
+                images.append(img)
+                angles.append(angle)
 
-                center_image = cv2.imread(center_name)
-                left_image = cv2.imread(left_name)
-                right_image = cv2.imread(right_name)
-                
-                center_image_flip = cv2.flip(center_image, 0)
-                left_image_flip = cv2.flip(center_image, 0)
-                right_image_flip = cv2.flip(center_image, 0)
-
-                center_angle = float(batch_sample[3])
-                left_angle = center_angle + 0.25
-                right_angle = center_angle - 0.25
-
-                center_angle_flip = center_angle
-                left_angle_flip = float(batch_sample[3]) - 0.25
-                right_angle_flip = float(batch_sample[3]) + 0.25                
-
-                images.append(center_image)
-                angles.append(center_angle)
-                images.append(left_image)
-                images.append(right_image)
-                angles.append(left_angle)
-                angles.append(right_angle)
-
-                images.append(center_image_flip)
-                angles.append(center_angle_flip)
-                images.append(left_image_flip)
-                images.append(right_image_flip)
-                angles.append(left_angle_flip)
-                angles.append(right_angle_flip)
-
-            # trim image to only see section with road
             X_train = np.array(images)
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
 
+def imageProcessing(sample, cutoff= 0.33):
+    angle = float(sample[3])
 
+    #To remove zero angle bias
+    if(abs(angle) < 0.05):
+        cutoff = 0.1
+    mid_cutoff =  (1-cutoff)/2 + cutoff
+
+    # Randomly pick between left, right, and center image with weighting to handle
+    # zero angle bias.
+    pick_camera = np.random.uniform()
+    img_path = None
+
+    #Use the center image
+    if pick_camera <= cutoff:
+        img_path = './data/IMG/' + batch_sample[0].split("\\")[-1]
+    # Use the left image
+    elif pick_camera > cutoff and pick_camera <= mid_cutoff:
+        img_path = './data/IMG/' + batch_sample[1].split("\\")[-1]
+        angle += 0.25
+    # Use the right image
+    else:
+        img_path = './data/IMG/' + batch_sample[2].split("\\")[-1]
+        angle += -0.25
+
+    img = cv2.imread(img_path)
+    pick_flip = np.random.randint(2)
+    if pick_flip == 1:
+        img = cv2.flip(img, 0)
+        angle *= -1
+    return img, angle
+
+if __name__ == "__main__":
+    train_samples, valid_samples = getSamples()
+    train_generator = generator(train_samples)
+    valid_generator = generator(valid_samples)
+    train_steps = (len(train_samples) // 32) + 1 
+    valid_steps = (len(valid_samples) // 32) + 1 
+    model = nvidiaModel()
+    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
+    # print(model.evaluate_generator(validation_samples, steps=3))
+    model.save('model4.h5')
+
+# Small generator to test generator mechanics
 def smallGenerator(samples, batch_size=32):
     samples = samples[0:72]
     num_samples = len(samples)
@@ -152,7 +140,7 @@ def smallGenerator(samples, batch_size=32):
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
 
-
+#A test of 3 images to determine if a model can learn a simple sample size.
 def testModel(model):
     ex_neg = "data/IMG/center_2017_11_18_16_00_07_045.jpg"
     ex_neg_lab = -0.3743682
@@ -167,17 +155,18 @@ def testModel(model):
     score = model.evaluate(X, y)
     print(score)
 
-if __name__ == "__main__":
-    #for arg in sys.argv[1:]:
-    #    print arg
-    #print(sys.argv[0])
-    #straightness()
-    train_samples, valid_samples = getSamples()
-    train_generator = generator(train_samples)
-    valid_generator = generator(valid_samples)
-    train_steps = (len(train_samples) // 32) + 1 
-    valid_steps = (len(valid_samples) // 32) + 1 
-    model = nvidiaModel()
-    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
-    # print(model.evaluate_generator(validation_samples, steps=3))
-    model.save('model3.h5')
+# Test straightness of samples
+def straightness():
+    samples = []
+    with open('data/driving_log.csv') as csvfile:
+        reader = csv.reader(csvfile)
+        for line in reader:
+            samples.append(line)
+    straight = 0
+    turn = 0
+    for sample in samples:
+        if float(sample[3]) == 0.0:
+            straight += 1
+        else:
+            turn += 1
+    print("Samples include {} straight images and {} turn images".format(staight, turn))
