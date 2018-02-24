@@ -21,7 +21,10 @@ def getSamples():
         reader = csv.reader(csvfile)
         for line in reader:
             samples.append(line)
-
+    with open('data/new_img/driving_log.csv') as csvfile:
+        reader = csv.reader(csvfile)
+        for line in reader:
+            samples.append(line)
     shuffle(samples)
     train_samples, validation_samples = train_test_split(samples, test_size=0.2)
     return train_samples, validation_samples
@@ -82,7 +85,7 @@ def imageProcessing(sample, cutoff= 0.33):
 
     #To remove zero angle bias
     if(abs(angle) < 0.02):
-        cutoff = 0.1
+        cutoff = 0.15
     mid_cutoff =  (1-cutoff)/2 + cutoff
 
     # Randomly pick between left, right, and center image with weighting to handle
@@ -134,7 +137,7 @@ if __name__ == "__main__":
     model = nvidiaModel()
     model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
     # print(model.evaluate_generator(validation_samples, steps=3))
-    model.save('model4.h5')
+    model.save('model5.h5')
 
 # Small generator to test generator mechanics
 def smallGenerator(samples, batch_size=32):
@@ -189,7 +192,7 @@ def straightness():
     print("Samples include {} straight images and {} turn images".format(staight, turn))
 
 #Show the different augmented images
-def plotSamples(samples)
+def plotSamples(samples):
     fig = plt.figure(figsize=(15,15))
     gs_all = gridspec.GridSpec(9, 5)
     for sample in samples:
