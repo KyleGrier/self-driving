@@ -17,10 +17,10 @@ path = "../Data/driving_log.csv"
 
 def getSamples():
     samples = []
-    with open('data/driving_log.csv') as csvfile:
-        reader = csv.reader(csvfile)
-        for line in reader:
-            samples.append(line)
+    #with open('data/driving_log.csv') as csvfile:
+    #    reader = csv.reader(csvfile)
+    #    for line in reader:
+    #        samples.append(line)
     with open('data/new_img/driving_log.csv') as csvfile:
         reader = csv.reader(csvfile)
         for line in reader:
@@ -134,9 +134,9 @@ if __name__ == "__main__":
     train_steps = (len(train_samples) // 128) + 1 
     valid_steps = (len(valid_samples) // 128) + 1 
     model = nvidiaModel()
-    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=8)
+    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=9)
     # print(model.evaluate_generator(validation_samples, steps=3))
-    model.save('model6.h5')
+    model.save('model7.h5')
 
 # Small generator to test generator mechanics
 def smallGenerator(samples, batch_size=32):
