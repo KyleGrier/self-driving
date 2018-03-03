@@ -69,16 +69,16 @@ def generator(samples, batch_size=32):
             angles = []
             for batch_sample in batch_samples:
                 angle = float(batch_sample[3])
-                if abs(angle) < 0.02:
-                    use_zero = np.random.randint(5)
-                    if use_zero == 1:
-                        img, angle = imageProcessing(batch_sample)           
-                        images.append(img)
-                        angles.append(angle)
-                else:
-                    img, angle = imageProcessing(batch_sample)      
-                    images.append(img)
-                    angles.append(angle)
+                #if abs(angle) < 0.02:
+                #    use_zero = np.random.randint(5)
+                #    if use_zero == 1:
+                #        img, angle = imageProcessing(batch_sample)           
+                #        images.append(img)
+                #        angles.append(angle)
+                #else:
+                img, angle = imageProcessing(batch_sample)      
+                images.append(img)
+                angles.append(angle)
             X_train = np.array(images)
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
@@ -103,11 +103,11 @@ def imageProcessing(sample, cutoff= 0.33):
     # Use the left image
     elif pick_camera > cutoff and pick_camera <= mid_cutoff:
         img_path = './data/IMG/' + sample[1].split("\\")[-1]
-        angle += 0.15
+        angle += 0.1
     # Use the right image
     else:
         img_path = './data/IMG/' + sample[2].split("\\")[-1]
-        angle += -0.15
+        angle += -0.1
 
     img = cv2.imread(img_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
