@@ -70,7 +70,7 @@ def generator(samples, batch_size=32):
             for batch_sample in batch_samples:
                 angle = float(batch_sample[3])
                 if abs(angle) < 0.02:
-                    use_zero = np.random.randint(10)
+                    use_zero = np.random.randint(5)
                     if use_zero == 1:
                         img, angle = imageProcessing(batch_sample)           
                         images.append(img)
@@ -146,9 +146,9 @@ if __name__ == "__main__":
     train_steps = (len(train_samples) // 128) + 1 
     valid_steps = (len(valid_samples) // 128) + 1 
     model = nvidiaModel()
-    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=5)
+    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=6)
     # print(model.evaluate_generator(validation_samples, steps=3))
-    model.save('model9.h5')
+    model.save('model10.h5')
 
 
 
