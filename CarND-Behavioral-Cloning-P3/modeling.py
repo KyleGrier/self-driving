@@ -10,6 +10,8 @@ import sklearn
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import seaborn as sns
+import os
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -22,6 +24,10 @@ def getSamples():
         for line in reader:
             samples.append(line)
     with open('data/new_img/driving_log.csv') as csvfile:
+        reader = csv.reader(csvfile)
+        for line in reader:
+            samples.append(line)
+    with open('data/adjust/driving_log.csv') as csvfile:
         reader = csv.reader(csvfile)
         for line in reader:
             samples.append(line)
@@ -53,16 +59,6 @@ def nvidiaModel():
 
     return model
 
-def modelTrainGen(validation_split, epochs):
-    train_samples, validation_samples = get_samples()
-    train_generator = generator(train_samples, batch_size=32)
-    validation_generator = generator(validation_samples, batch_size=32)
-    model = nvidiaModel()
-    model.fit_generator(train_generator, samples_per_epoch = \
-                len(train_samples), validation_data=validation_generator, \
-                nb_val_samples=len(validation_samples), nb_epoch=3)
-    model.save('model.h5')
-
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     while 1: # Loop forever so the generator never terminates
@@ -72,13 +68,21 @@ def generator(samples, batch_size=32):
             images = []
             angles = []
             for batch_sample in batch_samples:
-                img, angle = imageProcessing(batch_sample)           
-                images.append(img)
-                angles.append(angle)
-
+                angle = float(batch_sample[3])
+                if abs(angle) < 0.02:
+                    use_zero = np.random.randint(10)
+                    if use_zero == 1:
+                        img, angle = imageProcessing(batch_sample)           
+                        images.append(img)
+                        angles.append(angle)
+                else:
+                    img, angle = imageProcessing(batch_sample)      
+                    images.append(img)
+                    angles.append(angle)
             X_train = np.array(images)
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
+
 
 def imageProcessing(sample, cutoff= 0.33):
     angle = float(sample[3])
@@ -99,17 +103,17 @@ def imageProcessing(sample, cutoff= 0.33):
     # Use the left image
     elif pick_camera > cutoff and pick_camera <= mid_cutoff:
         img_path = './data/IMG/' + sample[1].split("\\")[-1]
-        angle += 0.1
+        angle += 0.15
     # Use the right image
     else:
         img_path = './data/IMG/' + sample[2].split("\\")[-1]
-        angle += -0.1
+        angle += -0.15
 
     img = cv2.imread(img_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pick_flip = np.random.randint(2)
     if pick_flip == 1:
-        img = cv2.flip(img, 0)
+        img = cv2.flip(img, 1)
         angle *= -1
 
     pick_bright = np.random.randint(2)
@@ -127,6 +131,14 @@ def augmentBrightness(img):
     img_aug = cv2.cvtColor(img_hsv,cv2.COLOR_HSV2RGB)
     return img
 
+
+#############################################################
+#############################################################
+#############################################################
+#############################################################
+
+
+
 if __name__ == "__main__":
     train_samples, valid_samples = getSamples()
     train_generator = generator(train_samples, batch_size=128)
@@ -137,6 +149,17 @@ if __name__ == "__main__":
     model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=5)
     # print(model.evaluate_generator(validation_samples, steps=3))
     model.save('model9.h5')
+
+
+
+
+
+#######################################################################################################################################################################
+#############################################################
+#############################################################
+##############    HELPER FUNCTIONS    #######################
+#############################################################
+#######################################################################################################################################################################
 
 # Small generator to test generator mechanics
 def smallGenerator(samples, batch_size=32):
@@ -191,13 +214,74 @@ def straightness():
     print("Samples include {} straight images and {} turn images".format(staight, turn))
 
 #Show the different augmented images
-def plotSamples(samples):
-    fig = plt.figure(figsize=(15,15))
+def plotSamples(gen):
+    fig, ax1 = plt.subplots(figsize=(15,15))
     gs_all = gridspec.GridSpec(9, 5)
-    for sample in samples:
-        img, ang = imageProcessing(sample)
+    gs_all.update(wspace=0.3, hspace=0.3)
+    i = 0
+    x_train, y_train = next(gen)
+    samples = zip(x_train, y_train)
+    for img, ang in samples:
         gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs_all[i])
-        ax1 = plt.subplot(gs[0])
-        ax1.imshow(img)
-        ax1.xlabel(str(ang))
+        ax = plt.subplot(gs[0])
+        ax.get_xaxis().set_ticks([])
+        ax.get_yaxis().set_visible(False)
+        ax.imshow(img)
+        ax.set_xlabel(str(ang))
+        i += 1
     plt.show()
+
+def stats(gen):
+    # iterate through samples in generator and record angles
+    angles = list()
+    for _, y_train in  gen:
+        angles.append(y_train)
+    f, ax = plt.subplot(figsize=(10,12))
+    sns.distplot(x)
+
+def removeFiles(folder, the_df):
+    files = os.listdir(path + folder)
+    print(len(files))
+    to_remove = []
+    for file in files:
+        search = ".*" + file
+        idx_df = df[df["center"].str.contains(search)]
+        to_remove.append(idx_df.index.values[0])
+    indexes_to_keep = set(range(the_df.shape[0])) - set(to_remove)
+    df_sliced = the_df.take(list(indexes_to_keep))
+    print(df_sliced.shape[0])
+    print(the_df.shape[0])
+    return df_sliced
+
+def getBridgecsv(folder):
+    files = os.listdir(path + folder)
+    print(len(files))
+    to_get = None
+    for file in files:
+        search = ".*" + file
+        idx_df = df[df["center"].str.contains(search)]
+        if to_get is None:
+            to_get = idx_df
+        else:
+            to_get = pd.concat([to_get, idx_df])
+    
+    to_get.to_csv(path_or_buf ="data/bridge.csv", index=False, header=False)
+    return
+
+def angleStats(samples, batch_size=32):
+    num_samples = len(samples)
+    shuffle(samples)
+    angles = []
+    for offset in range(0, num_samples, batch_size):
+        batch_samples = samples[offset:offset+batch_size]
+        for batch_sample in batch_samples:
+            angle = float(batch_sample[3])
+            if abs(angle) < 0.02:
+                use_zero = np.random.randint(10)
+                if use_zero == 1:
+                    img, angle = imageProcessing(batch_sample)           
+                    angles.append(angle)
+            else:
+                img, angle = imageProcessing(batch_sample)           
+                angles.append(angle)
+    sns.distplot(angles)
