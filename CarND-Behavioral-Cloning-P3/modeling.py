@@ -17,10 +17,10 @@ path = "../Data/driving_log.csv"
 
 def getSamples():
     samples = []
-    #with open('data/driving_log.csv') as csvfile:
-    #    reader = csv.reader(csvfile)
-    #    for line in reader:
-    #        samples.append(line)
+    with open('data/driving_log.csv') as csvfile:
+        reader = csv.reader(csvfile)
+        for line in reader:
+            samples.append(line)
     with open('data/new_img/driving_log.csv') as csvfile:
         reader = csv.reader(csvfile)
         for line in reader:
@@ -106,7 +106,7 @@ def imageProcessing(sample, cutoff= 0.33):
         angle += -0.25
 
     img = cv2.imread(img_path)
-
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pick_flip = np.random.randint(2)
     if pick_flip == 1:
         img = cv2.flip(img, 0)
