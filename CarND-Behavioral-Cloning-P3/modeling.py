@@ -99,11 +99,11 @@ def imageProcessing(sample, cutoff= 0.33):
     # Use the left image
     elif pick_camera > cutoff and pick_camera <= mid_cutoff:
         img_path = './data/IMG/' + sample[1].split("\\")[-1]
-        angle += 0.25
+        angle += 0.1
     # Use the right image
     else:
         img_path = './data/IMG/' + sample[2].split("\\")[-1]
-        angle += -0.25
+        angle += -0.1
 
     img = cv2.imread(img_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
