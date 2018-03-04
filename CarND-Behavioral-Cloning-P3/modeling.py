@@ -92,6 +92,14 @@ def imageProcessing(sample, cutoff= 0.33):
    #     cutoff = 0.1
     mid_cutoff =  (1-cutoff)/2 + cutoff
 
+    #Test in order to incorporate udacity data which has a different path setup
+    sp = None
+    u_or_m = len(sample[0].split("\\"))
+    if (u_or_m > 1):
+        sp = "\\"
+    else:
+        sp = '/'
+
     # Randomly pick between left, right, and center image with weighting to handle
     # zero angle bias.
     pick_camera = np.random.uniform()
@@ -99,14 +107,14 @@ def imageProcessing(sample, cutoff= 0.33):
 
     #Use the center image
     if pick_camera <= cutoff:
-        img_path = './data/IMG/' + sample[0].split("\\")[-1]
+        img_path = './data/IMG/' + sample[0].split(sp)[-1]
     # Use the left image
     elif pick_camera > cutoff and pick_camera <= mid_cutoff:
-        img_path = './data/IMG/' + sample[1].split("\\")[-1]
+        img_path = './data/IMG/' + sample[1].split(sp)[-1]
         angle += 0.1
     # Use the right image
     else:
-        img_path = './data/IMG/' + sample[2].split("\\")[-1]
+        img_path = './data/IMG/' + sample[2].split(sp)[-1]
         angle += -0.1
 
     img = cv2.imread(img_path)
