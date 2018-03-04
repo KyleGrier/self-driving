@@ -73,17 +73,17 @@ def generator(samples, batch_size=32):
             images = []
             angles = []
             for batch_sample in batch_samples:
-                angle = float(batch_sample[3])
-                if abs(angle) < 0.05:
-                    use_zero = np.random.randint(5)
-                    if use_zero == 1:
-                        img, angle = imageProcessing(batch_sample)           
-                        images.append(img)
-                        angles.append(angle)
-                else:
-                    img, angle = imageProcessing(batch_sample)      
-                    images.append(img)
-                    angles.append(angle)
+                #angle = float(batch_sample[3])
+                #if abs(angle) < 0.05:
+                #    use_zero = np.random.randint(5)
+                #    if use_zero == 1:
+                #        img, angle = imageProcessing(batch_sample)           
+                #        images.append(img)
+                #        angles.append(angle)
+                #else:
+                img, angle = imageProcessing(batch_sample)      
+                images.append(img)
+                angles.append(angle)
             X_train = np.array(images)
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
@@ -159,9 +159,18 @@ if __name__ == "__main__":
     train_steps = (len(train_samples) // 128) + 1 
     valid_steps = (len(valid_samples) // 128) + 1 
     model = nvidiaModel()
-    model.fit_generator(train_generator, steps_per_epoch=train_steps, validation_data=valid_generator, validation_steps = valid_steps, epochs=3)
-    # print(model.evaluate_generator(validation_samples, steps=3))
+    history_object = model.fit_generator(train_generator, steps_per_epoch=train_steps, 
+                        validation_data=valid_generator, validation_steps = valid_steps, epochs=3,
+                        verbose = 1)
     model.save('model2.h5')
+    plt.plot(history_object.history['loss'])
+    plt.plot(history_object.history['val_loss'])
+    plt.title('model mean squared error loss')
+    plt.ylabel('mean squared error loss')
+    plt.xlabel('epoch')
+    plt.legend(['training set', 'validation set'], loc='upper right')
+    plt.savefig('loss.png')
+
 
 
 
